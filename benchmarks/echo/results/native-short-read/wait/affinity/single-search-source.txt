@@ -1,0 +1,106 @@
+e3b67a578cf8b7e57b0b3e8623a0f40439fe7c33
+diff --git a/crates/native/src/worker.rs b/crates/native/src/worker.rs
+index 9862749..5bbc3b4 100644
+--- a/crates/native/src/worker.rs
++++ b/crates/native/src/worker.rs
+@@ -113,7 +113,7 @@ pub(crate) fn schedule(shared: &Arc<Shared>, runnable: Runnable) {
+     shared.wake_idle(preferred);
+ }
+ 
+-fn search(shared: &Shared, local: &LocalWorker, iteration: usize) -> Steal<Runnable> {
++fn search(shared: &Shared, local: &LocalWorker, iteration: usize, steal: bool) -> Steal<Runnable> {
+     let incoming = &shared.workers[local.identifier].incoming;
+     let mut retry = false;
+     // Admit external wakes at each batch boundary, even while local tasks keep waking themselves.
+@@ -123,6 +123,9 @@ fn search(shared: &Shared, local: &LocalWorker, iteration: usize) -> Steal<Runna
+     if let Some(runnable) = local.ready.pop() {
+         return Steal::Success(runnable);
+     }
++    if !steal {
++        return search_result(retry);
++    }
+     // Only steal after exhausting this worker's own work. Rotate the first victim so idle workers do not always contend on worker zero.
+     for offset in 0..shared.workers.len() {
+         let victim = local
+@@ -197,7 +200,7 @@ fn finish_idle_search(
+     runnable
+ }
+ 
+-fn find_work(shared: &Shared, iteration: usize) -> Steal<Runnable> {
++fn find_work(shared: &Shared, iteration: usize, steal: bool) -> Steal<Runnable> {
+     CURRENT_WORKER.with(|current| {
+         search(
+             shared,
+@@ -206,6 +209,7 @@ fn find_work(shared: &Shared, iteration: usize) -> Steal<Runnable> {
+                 .as_ref()
+                 .expect("worker context is installed"),
+             iteration,
++            steal,
+         )
+     })
+ }
+@@ -280,7 +284,7 @@ fn run_loop(
+             }
+             break;
+         }
+-        let runnable = match find_work(&shared, iteration) {
++        let runnable = match find_work(&shared, iteration, false) {
+             Steal::Empty => {
+                 worker.sleeping.store(true, Ordering::SeqCst);
+                 shared.idle_workers.fetch_add(1, Ordering::SeqCst);
+@@ -290,7 +294,7 @@ fn run_loop(
+                 finish_idle_search(
+                     worker,
+                     &shared.idle_workers,
+-                    find_work(&shared, iteration),
++                    find_work(&shared, iteration, true),
+                     || !shared.finished(),
+                     || {
+                         drive(
+diff --git a/crates/native/src/worker/tests.rs b/crates/native/src/worker/tests.rs
+index d0f06df..7f73dbc 100644
+--- a/crates/native/src/worker/tests.rs
++++ b/crates/native/src/worker/tests.rs
+@@ -213,8 +213,11 @@ fn batch_search_admits_incoming_tasks_before_local_work() {
+         timers: core_scheduler_timers::local::TimerQueue::with_capacity(8),
+     };
+     shared.workers[0].incoming.push(runnable());
+-    assert!(matches!(search(&shared, &local, 1), Steal::Success(_)));
+-    assert!(matches!(search(&shared, &local, 1), Steal::Empty));
++    assert!(matches!(
++        search(&shared, &local, 1, true),
++        Steal::Success(_)
++    ));
++    assert!(matches!(search(&shared, &local, 1, true), Steal::Empty));
+ }
+ 
+ #[test]
+@@ -296,8 +299,11 @@ fn idle_worker_steals_remote_wakes_when_preferred_worker_is_busy() {
+     };
+     // The victim has no local work, but a remote wake has reached its inbox.
+     shared.workers[1].incoming.push(runnable());
+-    assert!(matches!(search(&shared, &local, 1), Steal::Success(_)));
+-    assert!(matches!(search(&shared, &local, 1), Steal::Empty));
++    assert!(matches!(
++        search(&shared, &local, 1, true),
++        Steal::Success(_)
++    ));
++    assert!(matches!(search(&shared, &local, 1, true), Steal::Empty));
+ }
+ 
+ #[test]
+@@ -319,9 +325,12 @@ fn idle_worker_can_steal_both_ready_generations() {
+     };
+     for queue in &queues[0] {
+         queue.push(runnable());
+-        assert!(matches!(search(&shared, &local, 1), Steal::Success(_)));
++        assert!(matches!(
++            search(&shared, &local, 1, true),
++            Steal::Success(_)
++        ));
+     }
+-    assert!(matches!(search(&shared, &local, 1), Steal::Empty));
++    assert!(matches!(search(&shared, &local, 1, true), Steal::Empty));
+ }
+ 
+ #[test]

@@ -1,0 +1,8 @@
+# started on Sun Oct 25 09:44:25 2026
+
+664381,,syscalls:sys_enter_io_uring_enter,1676197748,100.00,,
+10,,syscalls:sys_enter_write,1676197748,100.00,,
+17,,syscalls:sys_enter_futex,1676197748,100.00,,
+0,,io_uring:io_uring_task_work_run,1676197748,100.00,,
+664380,,io_uring:io_uring_local_work_run,1676197748,100.00,,
+664382,,io_uring:io_uring_complete,1676197748,100.00,,

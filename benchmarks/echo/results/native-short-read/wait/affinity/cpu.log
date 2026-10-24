@@ -1,0 +1,22 @@
+deferred 4 1 0 176865
+coop-owner 4 1 0 161962
+coop-no-steal 4 1 2 162282
+deferred-no-steal 4 1 1 163127
+coop-no-steal 4 1 1 160225
+deferred 4 1 1 165134
+deferred-no-steal 4 1 0 169002
+coop-owner 4 1 2 160856
+deferred-owner 4 1 2 168432
+coop 4 1 0 165972
+coop-owner 4 1 1 164844
+deferred 4 1 2 172728
+deferred-owner 4 1 0 171825
+deferred-no-steal 4 1 2 164247
+tokio 4 1 2 162725
+coop-no-steal 4 1 0 161118
+coop 4 1 2 169090
+tokio 4 1 0 159932
+coop 4 1 1 178709
+deferred-owner 4 1 1 171698
+tokio 4 1 1 160696
+(4, 1, 64) {"coop": 169089.66666666666, "deferred": 172728.0, "coop-no-steal": 161118.0, "deferred-no-steal": 164246.66666666666, "coop-owner": 161962.0, "deferred-owner": 171698.33333333334, "tokio": 160696.0}

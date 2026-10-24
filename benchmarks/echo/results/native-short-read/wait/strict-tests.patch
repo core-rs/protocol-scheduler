@@ -1,0 +1,94 @@
+--- a/crates/iouring/src/io_uring_selector/tests.rs
++++ b/crates/iouring/src/io_uring_selector/tests.rs
+@@ -2326,6 +2326,91 @@
+     }
+ }
+ 
++fn deferred_notification() -> Option<(IoUringSelector, IoUringDriver)> {
++    let (selector, mut driver) = pair(1);
++    driver.reactor.as_mut().unwrap().bind_worker();
++    if !driver
++        .reactor
++        .as_ref()
++        .unwrap()
++        .ring
++        .params()
++        .is_setup_single_issuer()
++    {
++        drain(&selector, &mut driver);
++        return None;
++    }
++    driver.turn(Some(Duration::ZERO)).unwrap();
++    driver.waker().wake_by_ref();
++    let deadline = Instant::now() + Duration::from_secs(10);
++    while !driver.reactor.as_mut().unwrap().ring.submission().taskrun() {
++        assert!(
++            Instant::now() < deadline,
++            "notification task work did not arrive"
++        );
++        std::thread::yield_now();
++    }
++    Some((selector, driver))
++}
++
++#[test]
++fn nonblocking_turns_preserve_deferred_work_until_a_completion_wait() {
++    for timeout in [
++        None,
++        Some(Duration::from_nanos(1)),
++        Some(Duration::from_millis(1)),
++    ] {
++        let Some((selector, mut driver)) = deferred_notification() else {
++            return;
++        };
++        for _ in 0..2 {
++            driver.turn(Some(Duration::ZERO)).unwrap();
++            assert!(driver.reactor.as_mut().unwrap().ring.submission().taskrun());
++        }
++        let _hooks = Failures;
++        let collected = Arc::new(AtomicBool::new(false));
++        BEFORE_SYSCALL.with(|hook| {
++            let collected = Arc::clone(&collected);
++            *hook.borrow_mut() = Some((
++                "notification-read",
++                Box::new(move || collected.store(true, Ordering::SeqCst)),
++            ));
++        });
++        driver.turn(timeout).unwrap();
++        let observed = collected.load(Ordering::SeqCst);
++        drain(&selector, &mut driver);
++        assert!(
++            observed,
++            "completion wait did not publish pending task work"
++        );
++    }
++}
++
++#[test]
++fn repeated_nonblocking_turns_do_not_starve_deferred_completions() {
++    let Some((selector, mut driver)) = deferred_notification() else {
++        return;
++    };
++    let _hooks = Failures;
++    let collected = Arc::new(AtomicBool::new(false));
++    BEFORE_SYSCALL.with(|hook| {
++        let collected = Arc::clone(&collected);
++        *hook.borrow_mut() = Some((
++            "notification-read",
++            Box::new(move || collected.store(true, Ordering::SeqCst)),
++        ));
++    });
++    for _ in 0..64 {
++        driver.turn(Some(Duration::ZERO)).unwrap();
++        if collected.load(Ordering::SeqCst) {
++            break;
++        }
++    }
++    let observed = collected.load(Ordering::SeqCst);
++    drain(&selector, &mut driver);
++    assert!(observed, "repeated polling starved deferred completions");
++}
++
+ #[test]
+ fn binding_an_already_driven_ring_preserves_inflight_io_without_upgrade() {
+     use core_scheduler_selector::SelectorDriver;

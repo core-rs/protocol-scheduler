@@ -1,0 +1,67 @@
+e3b67a578cf8b7e57b0b3e8623a0f40439fe7c33
+diff --git a/crates/native/src/task_service.rs b/crates/native/src/task_service.rs
+index 392b85c..98bf7e9 100644
+--- a/crates/native/src/task_service.rs
++++ b/crates/native/src/task_service.rs
+@@ -128,17 +128,12 @@ impl Shared {
+         if self.idle_workers.load(Ordering::SeqCst) == 0 {
+             return;
+         }
++        // Diagnostic only: non-stealing helpers cannot execute another worker's queue.
+         if let Some(worker) = self.workers.get(preferred) {
+-            if worker.wake() {
+-                return;
+-            }
+-        }
+-        for worker in &self.workers {
+-            if worker.wake() {
+-                return;
+-            }
++            worker.wake();
+         }
+     }
++
+     pub(crate) fn retire_runnable(&self) {
+         if self.outstanding.fetch_sub(1, Ordering::AcqRel) == 1 {
+             // Draining waits for quiescence; intermediate retirements cannot satisfy that condition.
+diff --git a/crates/native/src/worker.rs b/crates/native/src/worker.rs
+index 9862749..77e1760 100644
+--- a/crates/native/src/worker.rs
++++ b/crates/native/src/worker.rs
+@@ -123,33 +123,7 @@ fn search(shared: &Shared, local: &LocalWorker, iteration: usize) -> Steal<Runna
+     if let Some(runnable) = local.ready.pop() {
+         return Steal::Success(runnable);
+     }
+-    // Only steal after exhausting this worker's own work. Rotate the first victim so idle workers do not always contend on worker zero.
+-    for offset in 0..shared.workers.len() {
+-        let victim = local
+-            .identifier
+-            .wrapping_add(iteration)
+-            .wrapping_add(offset)
+-            % shared.workers.len();
+-        if victim == local.identifier {
+-            continue;
+-        }
+-        let worker = &shared.workers[victim];
+-        // Both generations remain stealable while their owner swaps their roles.
+-        for stealer in &worker.stealers {
+-            if let Some(runnable) =
+-                take_stolen(stealer.steal_batch_and_pop(&local.ready), &mut retry)
+-            {
+-                return Steal::Success(runnable);
+-            }
+-        }
+-        // Remote wakes remain stealable while the previous worker is busy.
+-        if let Some(runnable) = take_stolen(
+-            worker.incoming.steal_batch_and_pop(&local.ready),
+-            &mut retry,
+-        ) {
+-            return Steal::Success(runnable);
+-        }
+-    }
++    // Diagnostic only: retain each task on its last worker.
+     search_result(retry)
+ }
+ 
+
+Binary SHA-256: ad8a172a25da7f39ee3f2a1821a44ec76bed184e1f43f6a035263e4847474db2

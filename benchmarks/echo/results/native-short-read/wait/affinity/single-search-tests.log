@@ -1,0 +1,253 @@
+   Compiling core-scheduler-timers v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-single-search/crates/timers)
+   Compiling core-scheduler v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-single-search)
+   Compiling core-scheduler-selector v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-single-search/crates/selector)
+   Compiling core-scheduler-conformance v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-single-search/crates/conformance)
+   Compiling core-scheduler-native v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-single-search/crates/native)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.56s
+     Running unittests src/lib.rs (/home/samuel/.cache/core-scheduler-parity/build/debug/deps/core_scheduler_native-e2e36531bb780049)
+
+running 73 tests
+test native_scheduler::driver_tests::closed_workers_keep_driving_abandoned_operations_until_retirement ... ok
+test native_scheduler::driver_tests::busy_tasks_do_not_starve_driver_turns ... ok
+test native_scheduler::driver_tests::completion_batch_is_published_before_any_local_task_resumes ... ok
+test native_scheduler::driver_tests::idle_completions_resume_tasks_without_interrupting_their_own_worker ... ok
+test native_scheduler::driver_tests::invalid_configuration_and_partial_startup_drop_every_driver ... ok
+test native_scheduler::driver_tests::remote_task_wakes_still_interrupt_an_idle_single_worker ... ok
+test native_scheduler::driver_tests::self_wakes_wait_for_the_next_driver_turn ... ok
+test native_scheduler::driver_tests::tasks_keep_running_after_driver_retirement_or_failure ... ok
+test native_scheduler::tests::block_on_inside_a_worker_is_rejected_without_stopping_execution ... ok
+test native_scheduler::tests::zero_executor_workers_and_timer_slots_are_rejected ... ok
+test task_service::tests::busy_local_queue_regularly_services_external_submissions ... ok
+
+running 1 test
+test native_scheduler::tests::default_scheduler_and_borrowed_non_send_root_future_work ... ok
+
+thread 'core-native-task' (948002) panicked at crates/native/src/task_service/tests.rs:266:13:
+Box<dyn Any>
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test task_service::tests::concurrent_spawners_share_initial_distribution ... 
+thread '<unnamed>' (947999) panicked at crates/native/src/task_service/tests.rs:253:13:
+abandoned destructor
+ok
+
+thread 'core-native-task' (948002) panicked at crates/native/src/task_service/tests.rs:292:28:
+Box<dyn Any>
+
+thread '<unnamed>' (947999) panicked at crates/native/src/task_service/tests.rs:253:13:
+abandoned destructor
+
+thread 'core-native-task' (948002) panicked at crates/native/src/task_service/tests.rs:278:13:
+completed future destructor
+
+thread 'core-native-task' (948002) panicked at crates/native/src/task_service/tests.rs:253:13:
+abandoned destructor
+test task_service::tests::conformance::abandoned_handle_releases_completed_output ... ok
+test task_service::tests::abandoned_task_destructor_panics_do_not_abort_or_stop_workers ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 72 filtered out; finished in 0.00s
+
+test task_service::tests::conformance::abandonment_destroys_task ... ok
+test task_service::tests::abandoned_task_destructor_panics_do_not_abort_or_stop_workers ... ok
+test task_service::tests::conformance::closed_service_rejects_unpolled_input ... ok
+test task_service::tests::conformance::cooperative_cancellation ... ok
+test task_service::tests::conformance::output_and_handle_transfer ... ok
+test task_service::tests::conformance::preserves_panic_payload ... ok
+test task_service::tests::conformance::registers_before_first_poll ... ok
+test task_service::tests::dispatch::handle_drop_defers_destruction_until_active_poll_returns ... ok
+test task_service::tests::future_destructor_panic_is_reported_and_worker_stays_available ... ok
+test task_service::tests::intermediate_runnable_retirement_does_not_wake_drain_waiters ... ok
+test task_service::tests::initial_tasks_are_distributed_before_their_first_poll ... ok
+test task_service::tests::rejected_future_destructors_can_close_admission_again ... ok
+test task_service::tests::task_wakes_retain_placement_without_advancing_admission ... ok
+test task_service::tests::local_work_can_be_stolen_while_its_worker_is_busy ... ok
+test task_service::tests::submissions_from_another_native_worker_use_the_selected_scheduler ... ok
+test task_service::tests::worker_startup_failures_are_reported ... ok
+test test_support::watchdog_propagates_assertion_panics ... ok
+test worker::tests::batch_search_admits_incoming_tasks_before_local_work ... ok
+test worker::tests::idle_empty_search_parks_while_scheduler_is_running ... ok
+test task_service::tests::tasks_progress_without_occupying_syscall_workers_and_survive_admission_close ... ok
+test worker::tests::idle_empty_search_skips_park_after_shutdown ... ok
+test worker::tests::idle_retry_restores_worker_sleep_state ... ok
+test worker::tests::idle_success_restores_worker_state_and_returns_the_runnable ... ok
+test worker::tests::idle_wake_falls_back_when_the_preferred_worker_is_busy ... ok
+test worker::tests::idle_wake_prefers_the_requested_sleeping_worker ... ok
+test worker::tests::local_worker_wake_clears_sleeping_without_interrupting_its_driver ... ok
+test worker::tests::idle_worker_can_steal_both_ready_generations ... ok
+test worker::tests::idle_worker_steals_remote_wakes_when_preferred_worker_is_busy ... ok
+test worker::tests::records_retry_separately_from_empty_and_success ... ok
+test worker::tests::nested_admission_distributes_tasks_instead_of_inheriting_the_worker ... ok
+test worker::tests::search_reports_retry_only_when_a_queue_raced ... ok
+test worker::tests::worker_yields_after_a_concurrent_steal_retry ... ok
+test worker::tests::remote_wake_retains_the_unpark_token_and_interrupts_the_driver_once ... ok
+test worker_timers::tests::conformance::absolute_deadline_and_wakeup ... ok
+test worker_timers::tests::closure_rejects_queued_registrations_and_notifies_late_updates ... ok
+test worker_timers::tests::conformance::expiry_wins_concurrent_cancellation ... ok
+test worker_timers::tests::conformance::lazy_registration_and_drop ... ok
+test worker_timers::tests::conformance::overflow_registers_no_timer ... ok
+test worker_timers::tests::conformance::pending_cancellation_and_wakeup ... ok
+test worker_timers::tests::conformance::pre_cancelled_waits ... ok
+test worker_timers::tests::conformance::relative_wait_starts_on_poll ... ok
+test worker_timers::tests::dropping_unacknowledged_registration_releases_its_slot ... ok
+test worker_timers::tests::full_capacity_reclaims_cancelled_timers_and_shutdown_rejects_waits ... ok
+test worker_timers::tests::local_capacity_and_delayed_updates_obey_registration_ownership ... ok
+test worker_timers::tests::moving_a_sleep_to_another_worker_updates_and_releases_its_original_queue ... ok
+test worker_timers::tests::calls_from_another_scheduler_use_the_explicitly_supplied_scheduler ... ok
+test worker_timers::tests::pending_registration_notifies_replacement_waker ... ok
+test worker_timers::tests::shutdown_waits_for_timer_callbacks_and_live_waits_can_outlast_workers ... ok
+test worker_timers::tests::worker_conformance::cancellation ... ok
+test worker_timers::tests::worker_conformance::deadline ... ok
+test worker_timers::tests::worker_conformance::expiry_wins ... ok
+test worker_timers::tests::worker_conformance::overflow ... ok
+test worker_timers::tests::worker_conformance::pre_cancelled ... ok
+test worker_timers::tests::worker_conformance::registration ... ok
+test worker_timers::tests::worker_conformance::relative ... ok
+test worker_timers::tests::worker_sleep_registration_repoll_and_drop_allocate_nothing ... ok
+test worker_timers::tests::earlier_external_deadline_interrupts_worker_wait ... ok
+test worker_timers::tests::timer_wakers_can_reenter_and_panic_without_stopping_workers ... ok
+test native_scheduler::driver_tests::timer_deadlines_bound_driver_waits_and_survive_driver_retirement ... ok
+
+test result: ok. 73 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/conformance.rs (/home/samuel/.cache/core-scheduler-parity/build/debug/deps/conformance-3fdb44483bdd6127)
+
+running 35 tests
+test blocking_work::lazy_submission ... ok
+test blocking_work::pre_cancelled_submission ... ok
+test blocking_queue::abandoned_handle_does_not_execute ... ok
+test blocking_queue::queued_cancellation_and_admission ... ok
+test blocking_work::preserves_panic_payload ... ok
+test blocking_work::returns_output ... ok
+test files::abandoned_resource_operation ... ok
+test files::accepted_write_progresses_without_polling_its_completion ... ok
+test files::bound_file_handles_reject_cancelled_and_closed_operations ... ok
+test files::bound_file_handles_preserve_cursor_offsets_and_ownership ... ok
+test files::close_retires_accepted_work_before_its_completion_is_collected ... ok
+test files::bound_file_submissions_separate_acceptance_from_owner_collection ... ok
+test files::create ... ok
+test files::independent_readers ... ok
+test files::dropping_an_unpolled_accepted_completion_releases_only_after_retirement ... ok
+test files::pending_resource_retirement ... ok
+test files::metadata ... ok
+test files::resource_inflight_cancellation ... ok
+test files::read ... ok
+test files::resource_cancellation ... ok
+test files::read_at ... ok
+test files::resource_write_error ... ok
+test files::seek ... ok
+test files::sequential_reader_writer ... ok
+test files::submission_is_lazy_and_pre_cancelled_admission_returns_the_owner ... ok
+test files::sync ... ok
+test files::submitted_reads_and_writes_return_the_original_storage ... ok
+test files::truncate_grow ... ok
+test files::truncate_shrink ... ok
+test files::write ... ok
+test files::write_at ... ok
+test files::write_error ... ok
+test files_move_between_threads_and_compatible_scheduler_instances ... ok
+test unix_positioned_operations_preserve_the_shared_cursor ... ok
+test queue_conformance_rejects_cancellation_capacity_and_handle_ownership_violations ... ok
+
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/public_capabilities.rs (/home/samuel/.cache/core-scheduler-parity/build/debug/deps/public_capabilities-9c051b9a6940dd9a)
+
+running 1 test
+test native_preserves_all_public_factories_without_backend_capabilities ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/selector.rs (/home/samuel/.cache/core-scheduler-parity/build/debug/deps/selector-bdb1142537383655)
+
+running 7 tests
+test failed_composition_closes_the_supplied_selector ... ok
+test custom_signal_capability_preserves_the_selectors_signal_and_subscription_types ... ok
+test optional_file_capabilities_preserve_custom_resources_arguments_and_errors ... ok
+test a_partial_selector_keeps_its_own_resource_type_and_needs_no_executor ... ok
+test portable_pool_capacity_is_independent_of_worker_count ... ok
+test readiness_is_usable_without_native_task_workers ... ok
+test registered_sockets_options_resolution_and_signals_forward_to_the_selector ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/sockets.rs (/home/samuel/.cache/core-scheduler-parity/build/debug/deps/sockets-893ff4dd67565f34)
+
+running 67 tests
+test failed_writes_return_the_original_buffer ... ok
+test ipv4::borrowed_datagrams::addresses_peek_and_truncation ... ok
+test ipv4::borrowed_datagrams::empty_messages ... ok
+test bound_socket_handles_reuse_storage ... ok
+test ipv4::borrowed_datagrams::pending_cancellation ... ok
+test ipv4::borrowed_messages::pending_cancellation ... ok
+test ipv4::borrowed_messages::pre_cancelled ... ok
+test ipv4::borrowed_messages::abandoned_receives ... ok
+test aggregate_socket_helpers_remain_compatible ... ok
+test ipv4::borrowed_messages::readiness ... ok
+test ipv4::borrowed_scalar::abandoned_receives ... ok
+test ipv4::borrowed_messages::stack_transfers ... ok
+test ipv4::borrowed_scalar::pending_cancellation ... ok
+test ipv4::borrowed_scalar::pre_cancelled ... ok
+test ipv4::borrowed_scalar::stack_transfers ... ok
+test ipv4::borrowed_scalar::readiness_and_eof ... ok
+test ipv4::datagrams::addresses_peek_and_truncation ... ok
+test ipv4::datagrams::empty_messages_and_boundaries ... ok
+test ipv4::datagrams::pending_receive_cancellation ... ok
+test ipv4::messages::pending_receive_cancellation ... ok
+test ipv4::messages::pre_cancelled ... ok
+test ipv4::packet_handles::borrowed ... ok
+test ipv4::messages::prepared_transfers ... ok
+test ipv4::packet_handles::cancellation ... ok
+test ipv4::packet_handles::owned ... ok
+test ipv4::pooled_datagram_receiver ... ok
+test ipv4::scalar::pending_borrowed_read_cancellation ... ok
+test ipv4::scalar::pending_read_cancellation ... ok
+test ipv4::pooled_stream_receiver ... ok
+test ipv4::scalar::pre_cancelled ... ok
+test ipv4::scalar::shutdown_and_eof ... ok
+test ipv6::borrowed_datagrams::addresses_peek_and_truncation ... ok
+test ipv4::scalar::transfer ... ok
+test ipv6::borrowed_datagrams::empty_messages ... ok
+test ipv6::borrowed_datagrams::pending_cancellation ... ok
+test ipv6::borrowed_messages::pending_cancellation ... ok
+test ipv6::borrowed_messages::abandoned_receives ... ok
+test ipv6::borrowed_messages::readiness ... ok
+test ipv6::borrowed_messages::pre_cancelled ... ok
+test ipv6::borrowed_messages::stack_transfers ... ok
+test ipv6::borrowed_scalar::abandoned_receives ... ok
+test ipv6::borrowed_scalar::pending_cancellation ... ok
+test ipv6::borrowed_scalar::pre_cancelled ... ok
+test ipv6::datagrams::empty_messages_and_boundaries ... ok
+test ipv6::datagrams::addresses_peek_and_truncation ... ok
+test ipv6::borrowed_scalar::stack_transfers ... ok
+test ipv6::borrowed_scalar::readiness_and_eof ... ok
+test ipv6::datagrams::pending_receive_cancellation ... ok
+test ipv6::messages::pending_receive_cancellation ... ok
+test ipv6::messages::prepared_transfers ... ok
+test ipv6::messages::pre_cancelled ... ok
+test ipv6::packet_handles::borrowed ... ok
+test ipv6::packet_handles::cancellation ... ok
+test ipv6::packet_handles::owned ... ok
+test ipv6::pooled_datagram_receiver ... ok
+test ipv6::scalar::pending_borrowed_read_cancellation ... ok
+test ipv6::pooled_stream_receiver ... ok
+test ipv6::scalar::pre_cancelled ... ok
+test ipv6::scalar::pending_read_cancellation ... ok
+test pooled_messages_use_the_explicit_native_scheduler ... ok
+test ipv6::scalar::transfer ... ok
+test ipv6::scalar::shutdown_and_eof ... ok
+test pooled_stream_uses_the_explicit_native_scheduler ... ok
+test selector_packet_handles::borrowed ... ok
+test selector_packet_handles::cancellation ... ok
+test selector_packet_handles::owned ... ok
+test sockets_move_between_threads_and_compatible_scheduler_instances ... ok
+
+test result: ok. 67 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests core_scheduler_native
+
+running 2 tests
+test crates/native/src/../readme.md - (line 46) ... ok
+test crates/native/src/../readme.md - (line 11) ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 0.15s; merged doctests compilation took 0.14s

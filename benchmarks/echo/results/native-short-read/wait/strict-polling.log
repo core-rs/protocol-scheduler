@@ -1,0 +1,21 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.01s
+     Running unittests src/lib.rs (/home/samuel/.cache/core-scheduler-parity/build/debug/deps/core_scheduler_iouring-f3cae74d47062236)
+
+running 1 test
+test io_uring_selector::tests::repeated_nonblocking_turns_do_not_starve_deferred_completions ... FAILED
+
+failures:
+
+---- io_uring_selector::tests::repeated_nonblocking_turns_do_not_starve_deferred_completions stdout ----
+
+thread 'io_uring_selector::tests::repeated_nonblocking_turns_do_not_starve_deferred_completions' (929859) panicked at crates/iouring/src/io_uring_selector/tests.rs:2411:5:
+repeated polling starved deferred completions
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    io_uring_selector::tests::repeated_nonblocking_turns_do_not_starve_deferred_completions
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 233 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p core-scheduler-iouring --lib`

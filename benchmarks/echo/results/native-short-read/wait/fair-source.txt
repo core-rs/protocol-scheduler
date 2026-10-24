@@ -1,0 +1,114 @@
+e3b67a578cf8b7e57b0b3e8623a0f40439fe7c33
+diff --git a/crates/iouring/src/io_uring_selector.rs b/crates/iouring/src/io_uring_selector.rs
+index 9037ce7..246eef9 100644
+--- a/crates/iouring/src/io_uring_selector.rs
++++ b/crates/iouring/src/io_uring_selector.rs
+@@ -26,6 +26,7 @@ use std::{
+ };
+ const CANCEL_TAG: u64 = 1 << 63;
+ const NOTIFICATION_TAG: u64 = u64::MAX;
++const MAX_DEFERRED_TURNS: u8 = 32;
+ 
+ // Keep syscall failures deterministic in unit tests while production calls the OS directly.
+ fn syscall<T>(name: &'static str, operation: impl FnOnce() -> io::Result<T>) -> io::Result<T> {
+@@ -750,6 +751,7 @@ impl Selector for IoUringSelector {
+ pub(crate) struct Reactor {
+     ring: IoUring,
+     started: bool,
++    deferred_turns: u8,
+     notification: Arc<OwnedFd>,
+     incoming: mpsc::Receiver<Command>,
+     controller: Arc<Controller>,
+@@ -782,6 +784,7 @@ impl Reactor {
+             buffer_pools: Vec::new(),
+             pool_ready: Vec::new(),
+             started: false,
++            deferred_turns: 0,
+             notification,
+             incoming,
+             controller,
+@@ -800,7 +803,8 @@ impl Reactor {
+         if !self.started {
+             if let Ok(ring) = syscall("cooperative-ring", || {
+                 IoUring::builder()
+-                    .setup_coop_taskrun()
++                    .setup_single_issuer()
++                    .setup_defer_taskrun()
+                     .setup_taskrun_flag()
+                     .build(self.ring.params().sq_entries())
+             }) {
+@@ -1187,18 +1191,47 @@ impl Reactor {
+             || !self.notification_armed
+             || crate::io_uring_worker::take_notification(&self.controller);
+         if return_to_executor {
+-            let needs_submit = {
++            let completion_wait = timeout != Some(Duration::ZERO);
++            let (count, flush_task_work) = {
+                 let submissions = self.ring.submission();
+-                (!submissions.is_empty() && !defer_submission)
+-                    || submissions.cq_overflow()
+-                    || submissions.taskrun()
++                let overflow = submissions.cq_overflow();
++                let pending = submissions.taskrun();
++                if !pending {
++                    self.deferred_turns = 0;
++                } else if !completion_wait {
++                    self.deferred_turns = self.deferred_turns.saturating_add(1);
++                }
++                // Prefer servicing task work when a completion wait is requested. A continuously runnable worker still needs bounded I/O progress; other commands and completions must not reset this budget.
++                let flush_task_work = overflow
++                    || (pending && (completion_wait || self.deferred_turns >= MAX_DEFERRED_TURNS));
++                // A task-work flush alone need not consume a fresh readiness-only batch. Overflow still publishes the entire SQ to preserve the provider's progress behavior.
++                (
++                    if defer_submission && !overflow {
++                        0
++                    } else {
++                        submissions.len() as u32
++                    },
++                    flush_task_work,
++                )
+             };
+-            if needs_submit {
++            if count != 0 || flush_task_work {
+                 let before = self
+                     .submission_notifications
+                     .pending()
+                     .then(|| self.ring.submission().len());
+-                let result = syscall("submit", || self.ring.submit());
++                let result = syscall("submit", || {
++                    let flags = if flush_task_work {
++                        io_uring::EnterFlags::GETEVENTS.bits()
++                    } else {
++                        0
++                    };
++                    // SAFETY: This exclusive ring owner retains every published request. No SQ polling is configured, zero completions cannot block, and no argument pointer is passed. Request GETEVENTS only for an intended completion wait, overflow, or the bounded progress fallback.
++                    unsafe {
++                        self.ring
++                            .submitter()
++                            .enter::<libc::sigset_t>(count, 0, flags, None)
++                    }
++                });
+                 if let Some(before) = before {
+                     self.submission_notifications
+                         .consumed(before, self.ring.submission().len());
+@@ -1214,6 +1247,10 @@ impl Reactor {
+                         result?;
+                     }
+                 }
++                if flush_task_work {
++                    self.deferred_turns = 0;
++                    self.collect_completions()?;
++                }
+             }
+             return Ok(false);
+         }
+@@ -1238,6 +1275,8 @@ impl Reactor {
+             {
+                 return Err(error);
+             }
++        } else {
++            self.deferred_turns = 0;
+         }
+         // Publish the completion snapshot produced by this wait before returning. Its wakeups enter the executor's ready queue without another idle turn.
+         self.collect_completions()?;
+e5285ddd9065f136e2557e54be7bb57ab84ab02f42b7e66ab90466b085e10f7b  Cargo.lock

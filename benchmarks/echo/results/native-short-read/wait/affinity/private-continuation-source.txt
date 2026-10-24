@@ -1,0 +1,188 @@
+e3b67a578cf8b7e57b0b3e8623a0f40439fe7c33
+diff --git a/crates/native/src/worker.rs b/crates/native/src/worker.rs
+index 9862749..5f4dc18 100644
+--- a/crates/native/src/worker.rs
++++ b/crates/native/src/worker.rs
+@@ -56,6 +56,8 @@ struct LocalWorker {
+     scheduler: Weak<Shared>,
+     ready: Worker<Runnable>,
+     current: Worker<Runnable>,
++    next: Option<Runnable>,
++    polling_tasks: bool,
+     timers: core_scheduler_timers::local::TimerQueue<Waker>,
+ }
+ 
+@@ -94,33 +96,41 @@ pub(crate) fn timers<T>(
+ 
+ pub(crate) fn schedule(shared: &Arc<Shared>, runnable: Runnable) {
+     let preferred = runnable.metadata().worker.load(Ordering::Relaxed);
+-    let remote = CURRENT_WORKER.with(|current| {
+-        let current = current.borrow();
+-        if let Some(worker) = current.as_ref() {
++    let notify = CURRENT_WORKER.with(|current| {
++        let mut current = current.borrow_mut();
++        if let Some(worker) = current.as_mut() {
+             if std::ptr::eq(worker.scheduler.as_ptr(), Arc::as_ptr(shared))
+                 && preferred == worker.identifier
+             {
+-                worker.ready.push(runnable);
+-                return None;
++                if worker.polling_tasks {
++                    worker.ready.push(runnable);
++                    return true;
++                }
++                // Reserve one continuation for this worker. Additional work remains available to steal.
++                if let Some(previous) = worker.next.replace(runnable) {
++                    worker.ready.push(previous);
++                    return true;
++                }
++                return false;
+             }
+         }
+-        Some(runnable)
+-    });
+-    if let Some(runnable) = remote {
+         shared.workers[preferred].incoming.push(runnable);
++        true
++    });
++    if notify {
++        // Publication precedes the sleeping flag exchange. A worker publishes its sleeping flag before rechecking queues, so a racing wake is retained.
++        shared.wake_idle(preferred);
+     }
+-    // Publication precedes the sleeping flag exchange. A worker publishes its sleeping flag before rechecking queues, so a racing wake is retained.
+-    shared.wake_idle(preferred);
+ }
+ 
+-fn search(shared: &Shared, local: &LocalWorker, iteration: usize) -> Steal<Runnable> {
++fn search(shared: &Shared, local: &mut LocalWorker, iteration: usize) -> Steal<Runnable> {
+     let incoming = &shared.workers[local.identifier].incoming;
+     let mut retry = false;
+     // Admit external wakes at each batch boundary, even while local tasks keep waking themselves.
+     if !incoming.is_empty() {
+         let _ = take_stolen(incoming.steal_batch(&local.ready), &mut retry);
+     }
+-    if let Some(runnable) = local.ready.pop() {
++    if let Some(runnable) = local.next.take().or_else(|| local.ready.pop()) {
+         return Steal::Success(runnable);
+     }
+     // Only steal after exhausting this worker's own work. Rotate the first victim so idle workers do not always contend on worker zero.
+@@ -202,8 +212,8 @@ fn find_work(shared: &Shared, iteration: usize) -> Steal<Runnable> {
+         search(
+             shared,
+             current
+-                .borrow()
+-                .as_ref()
++                .borrow_mut()
++                .as_mut()
+                 .expect("worker context is installed"),
+             iteration,
+         )
+@@ -263,6 +273,8 @@ fn run_loop(
+             scheduler: Arc::downgrade(&shared),
+             ready,
+             current,
++            next: None,
++            polling_tasks: false,
+             timers: core_scheduler_timers::local::TimerQueue::with_capacity(shared.timer_capacity),
+         }))
+     });
+@@ -319,6 +331,7 @@ fn run_ready_batch(shared: &Shared, first: Runnable) {
+         let mut current = current.borrow_mut();
+         let local = current.as_mut().expect("worker context is installed");
+         std::mem::swap(&mut local.ready, &mut local.current);
++        local.polling_tasks = true;
+         (local.identifier, !local.current.is_empty())
+     });
+     if has_more {
+@@ -341,6 +354,9 @@ fn run_ready_batch(shared: &Shared, first: Runnable) {
+                 .pop()
+         });
+     }
++    CURRENT_WORKER.with(|current| {
++        current.borrow_mut().as_mut().unwrap().polling_tasks = false;
++    });
+ }
+ 
+ #[cfg(test)]
+diff --git a/crates/native/src/worker/tests.rs b/crates/native/src/worker/tests.rs
+index d0f06df..00dca97 100644
+--- a/crates/native/src/worker/tests.rs
++++ b/crates/native/src/worker/tests.rs
+@@ -205,16 +205,18 @@ fn batch_search_admits_incoming_tasks_before_local_work() {
+     let queues = std::array::from_fn(|_| Worker::new_fifo());
+     let shared = Arc::new(Shared::new(std::slice::from_ref(&queues), 8));
+     let [ready, current] = queues;
+-    let local = LocalWorker {
++    let mut local = LocalWorker {
+         identifier: 0,
+         scheduler: Arc::downgrade(&shared),
+         ready,
+         current,
++        next: None,
++        polling_tasks: true,
+         timers: core_scheduler_timers::local::TimerQueue::with_capacity(8),
+     };
+     shared.workers[0].incoming.push(runnable());
+-    assert!(matches!(search(&shared, &local, 1), Steal::Success(_)));
+-    assert!(matches!(search(&shared, &local, 1), Steal::Empty));
++    assert!(matches!(search(&shared, &mut local, 1), Steal::Success(_)));
++    assert!(matches!(search(&shared, &mut local, 1), Steal::Empty));
+ }
+ 
+ #[test]
+@@ -246,6 +248,8 @@ fn nested_admission_distributes_tasks_instead_of_inheriting_the_worker() {
+             scheduler: Arc::downgrade(&shared),
+             ready,
+             current,
++            next: None,
++            polling_tasks: true,
+             timers: core_scheduler_timers::local::TimerQueue::with_capacity(8),
+         }));
+     });
+@@ -287,17 +291,19 @@ fn idle_worker_steals_remote_wakes_when_preferred_worker_is_busy() {
+         .collect();
+     let shared = Arc::new(Shared::new(&queues, 8));
+     let [ready, current] = queues.remove(0);
+-    let local = LocalWorker {
++    let mut local = LocalWorker {
+         identifier: 0,
+         scheduler: Arc::downgrade(&shared),
+         ready,
+         current,
++        next: None,
++        polling_tasks: true,
+         timers: core_scheduler_timers::local::TimerQueue::with_capacity(8),
+     };
+     // The victim has no local work, but a remote wake has reached its inbox.
+     shared.workers[1].incoming.push(runnable());
+-    assert!(matches!(search(&shared, &local, 1), Steal::Success(_)));
+-    assert!(matches!(search(&shared, &local, 1), Steal::Empty));
++    assert!(matches!(search(&shared, &mut local, 1), Steal::Success(_)));
++    assert!(matches!(search(&shared, &mut local, 1), Steal::Empty));
+ }
+ 
+ #[test]
+@@ -310,18 +316,20 @@ fn idle_worker_can_steal_both_ready_generations() {
+         .collect();
+     let shared = Arc::new(Shared::new(&queues, 8));
+     let [ready, current] = queues.remove(0);
+-    let local = LocalWorker {
++    let mut local = LocalWorker {
+         identifier: 0,
+         scheduler: Arc::downgrade(&shared),
+         ready,
+         current,
++        next: None,
++        polling_tasks: true,
+         timers: core_scheduler_timers::local::TimerQueue::with_capacity(8),
+     };
+     for queue in &queues[0] {
+         queue.push(runnable());
+-        assert!(matches!(search(&shared, &local, 1), Steal::Success(_)));
++        assert!(matches!(search(&shared, &mut local, 1), Steal::Success(_)));
+     }
+-    assert!(matches!(search(&shared, &local, 1), Steal::Empty));
++    assert!(matches!(search(&shared, &mut local, 1), Steal::Empty));
+ }
+ 
+ #[test]

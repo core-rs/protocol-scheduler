@@ -1,0 +1,22 @@
+    Checking fastrand v2.5.0
+    Checking core-scheduler-timers v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-wait-taskwork/crates/timers)
+    Checking async-task v4.7.1
+    Checking once_cell v1.21.4
+    Checking allocation-counter v0.8.1
+    Checking crossbeam-utils v0.8.23
+    Checking rustix v1.1.5
+    Checking core-scheduler v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-wait-taskwork)
+    Checking getrandom v0.4.3
+    Checking futures-lite v2.6.1
+    Checking concurrent-queue v2.5.0
+    Checking crossbeam-epoch v0.9.21
+    Checking crossbeam-queue v0.3.14
+    Checking crossbeam-deque v0.8.8
+    Checking core-scheduler-conformance v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-wait-taskwork/crates/conformance)
+    Checking polling v3.11.0
+    Checking tempfile v3.27.0
+    Checking async-io v2.6.0
+    Checking core-scheduler-selector v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-wait-taskwork/crates/selector)
+    Checking core-scheduler-native v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-wait-taskwork/crates/native)
+    Checking core-scheduler-iouring v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-wait-taskwork/crates/iouring)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.07s

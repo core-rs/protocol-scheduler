@@ -1,0 +1,8 @@
+   Compiling core-scheduler-iouring v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-wait-taskwork/crates/iouring)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.17s
+     Running tests/wait_urgent.rs (/home/samuel/.cache/core-scheduler-parity/build/debug/deps/wait_urgent-c1949dcc5e0b4886)
+
+running 1 test
+test ordinary_bytes_after_an_urgent_mark_remain_readable ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s

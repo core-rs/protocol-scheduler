@@ -1,0 +1,8 @@
+   Compiling core-scheduler v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-empty-victims)
+   Compiling core-scheduler-timers v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-empty-victims/crates/timers)
+   Compiling core-scheduler-selector v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-empty-victims/crates/selector)
+   Compiling core-scheduler-tokio v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-empty-victims/crates/tokio)
+   Compiling core-scheduler-native v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-empty-victims/crates/native)
+   Compiling core-scheduler-iouring v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-empty-victims/crates/iouring)
+   Compiling core-scheduler-echo-benchmark v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-empty-victims/benchmarks/echo)
+    Finished `release` profile [optimized + debuginfo] target(s) in 2.73s

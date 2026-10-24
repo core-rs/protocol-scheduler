@@ -1,0 +1,8 @@
+       candidate  940425 [000] 122164.109483: io_uring:io_uring_create: ring 0xffff88a1ff64b800, fd 5 sq size 256, cq size 512, flags 0x0
+       candidate  940425 [000] 122164.109500: io_uring:io_uring_create: ring 0xffff88a19936b000, fd 7 sq size 256, cq size 512, flags 0x0
+       candidate  940425 [000] 122164.109511: io_uring:io_uring_create: ring 0xffff88a41d3f3800, fd 9 sq size 256, cq size 512, flags 0x0
+       candidate  940425 [000] 122164.109519: io_uring:io_uring_create: ring 0xffff88a204540800, fd 11 sq size 256, cq size 512, flags 0x0
+ core-native-tas  940427 [001] 122164.109684: io_uring:io_uring_create: ring 0xffff88a1b4319000, fd 13 sq size 256, cq size 512, flags 0x3200
+ core-native-tas  940428 [003] 122164.109777: io_uring:io_uring_create: ring 0xffff88a1fbce1000, fd 5 sq size 256, cq size 512, flags 0x3200
+ core-native-tas  940429 [002] 122164.109847: io_uring:io_uring_create: ring 0xffff88a1d1d09800, fd 7 sq size 256, cq size 512, flags 0x3200
+ core-native-tas  940430 [001] 122164.109850: io_uring:io_uring_create: ring 0xffff88a2d8be2800, fd 14 sq size 256, cq size 512, flags 0x3200

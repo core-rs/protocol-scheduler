@@ -1,0 +1,22 @@
+   Compiling core-scheduler-iouring v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-wait-taskwork/crates/iouring)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.31s
+     Running tests/busy_completions.rs (/home/samuel/.cache/core-scheduler-parity/build/debug/deps/busy_completions-af1525995b7a26a9)
+
+running 1 test
+test a_self_waking_task_does_not_starve_socket_completions ... FAILED
+
+failures:
+
+---- a_self_waking_task_does_not_starve_socket_completions stdout ----
+
+thread 'a_self_waking_task_does_not_starve_socket_completions' (930302) panicked at crates/iouring/tests/busy_completions.rs:91:25:
+busy task starved socket completion: Timeout
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    a_self_waking_task_does_not_starve_socket_completions
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.00s
+
+error: test failed, to rerun pass `-p core-scheduler-iouring --test busy_completions`

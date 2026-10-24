@@ -1,0 +1,23 @@
+   Compiling core-scheduler-native v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-wait-taskwork/crates/native)
+warning: unused variable: `iteration`
+   --> crates/native/src/worker.rs:116:49
+    |
+116 | fn search(shared: &Shared, local: &LocalWorker, iteration: usize) -> Steal<Runnable> {
+    |                                                 ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_iteration`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: field `stealers` is never read
+  --> crates/native/src/worker.rs:16:5
+   |
+13 | pub(crate) struct WorkerState {
+   |                   ----------- field in this struct
+...
+16 |     stealers: [Stealer<Runnable>; 2],
+   |     ^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+   Compiling core-scheduler-echo-benchmark v0.0.0 (/home/samuel/Developer/core-rs/core-scheduler-native-wait-taskwork/benchmarks/echo)
+warning: `core-scheduler-native` (lib) generated 2 warnings (run `cargo fix --lib -p core-scheduler-native` to apply 1 suggestion)
+    Finished `release` profile [optimized + debuginfo] target(s) in 1.77s
